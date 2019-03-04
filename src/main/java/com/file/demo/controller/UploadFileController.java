@@ -103,7 +103,6 @@ public class UploadFileController {
 
     @RequestMapping("/uploadFtp")
     public ResponseEntity<?> uploadFileToFtp(@RequestParam("file") MultipartFile file) {
-        sftp.cd(uploadPath);
         try {
             sftp.cd(uploadPath);
         } catch (Exception e) {
