@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.extra.ssh.JschUtil;
 import cn.hutool.extra.ssh.Sftp;
+import com.jcraft.jsch.SftpException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,6 +44,8 @@ public class UploadFileController {
     private String ftpUsername;
     @Value("${iot-ftp.password}")
     private String ftpPassword;
+
+    private Sftp sftp = JschUtil.createSftp(ftpHost, ftpPort, ftpUsername, ftpPassword);
 
     @RequestMapping("/upload")
     public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) {
@@ -100,16 +103,19 @@ public class UploadFileController {
 
     @RequestMapping("/uploadFtp")
     public ResponseEntity<?> uploadFileToFtp(@RequestParam("file") MultipartFile file) {
-        Sftp sftp = JschUtil.createSftp(ftpHost, ftpPort, ftpUsername, ftpPassword);
-        File target = new File(uploadPath + System.lineSeparator() + file.getOriginalFilename());
+        sftp.cd(uploadPath);
         try {
-            file.transferTo(target);
-            sftp.upload(file.getOriginalFilename(), target);
-        } catch (IOException e) {
-            logger.error("文件转换失败:{}", e.getMessage());
-        } finally {
-            target.delete();
+            sftp.cd(uploadPath);
+        } catch (Exception e) {
+            sftp.mkdir(uploadPath);
         }
-        return new ResponseEntity<>(MapUtil.builder("message", "Upload failed").build(), HttpStatus.INTERNAL_SERVER_ERROR);
+        try {
+            sftp.getClient().put(file.getInputStream(), file.getOriginalFilename());
+        } catch (SftpException e) {
+            logger.error("文件上传失败:{}", e.getMessage());
+        } catch (IOException e) {
+            logger.error("文件上传失败:{}", e.getMessage());
+        }
+        return new ResponseEntity<>(MapUtil.builder("message", "Upload successful").build(), HttpStatus.OK);
     }
 }
