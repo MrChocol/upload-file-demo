@@ -26,9 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * 文件上传
- */
+
 @RestController
 @RequestMapping(value = "/file")
 public class UploadFileController {
@@ -40,6 +38,9 @@ public class UploadFileController {
     @Autowired
     private Sftp sftp;
 
+    /**
+     * 上传到本地
+     */
     @RequestMapping("/upload")
     public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) {
         try {
@@ -65,6 +66,9 @@ public class UploadFileController {
         return new ResponseEntity<>(MapUtil.builder("message", "Upload failed").build(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    /**
+     * 多文件上传
+     */
     @PostMapping("/batchUpload")
     public ResponseEntity<?> batchFileUpload(HttpServletRequest request) {
         List<MultipartFile> files = ((MultipartHttpServletRequest) request).getFiles("file");
@@ -94,6 +98,9 @@ public class UploadFileController {
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
+    /**
+     * 上传到服务器
+     */
     @RequestMapping("/uploadFtp")
     public ResponseEntity<?> uploadFileToFtp(@RequestParam("file") MultipartFile file) {
         try {

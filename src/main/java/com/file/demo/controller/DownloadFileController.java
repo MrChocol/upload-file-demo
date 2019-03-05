@@ -29,6 +29,9 @@ public class DownloadFileController {
     @Autowired
     private Sftp sftp;
 
+    /**
+     * 本地下载
+     */
     @GetMapping("/download/{fileName}")
     public ResponseEntity<?> downloadFile(@PathVariable("fileName") final String fileName, HttpServletResponse response) {
         if (fileName != null) {
@@ -76,6 +79,11 @@ public class DownloadFileController {
         return null;
     }
 
+    /**
+     * 通过服务器下载
+     *
+     * @param fileName 指定文件名
+     */
     @GetMapping("/downloadFtp/{fileName}")
     public ResponseEntity<?> downloadFileFromFtp(@PathVariable("fileName") final String fileName, HttpServletResponse response) {
         //判断fileName是否存在
