@@ -179,6 +179,7 @@ public class DownloadFileController {
                     sftp.delFile(packagePath + temporaryPackageName);
                     // 解压本地文件
                     ZipUtil.unzip(localFile);
+                    localFile.delete();
                 } else
                     FileUtil.writeFromStream(sftp.getClient().get(fileName), downloadPath + fileName);
                 return new ResponseEntity<>(MapUtil.builder("message", "Download successful").build(), HttpStatus.OK);
