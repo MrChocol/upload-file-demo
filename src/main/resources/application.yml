@@ -1,12 +1,22 @@
 server:
   port: 8090
-file:
-  upload.path: /root/upload/
-  download.path: /root/upload/
-#  upload.path: C:\chenli\IDEA\Idea_WorkSpace\filedemo\upload\
-#  download.path: C:\chenli\IDEA\Idea_WorkSpace\filedemo\upload\
-iot-ftp:
-  host: 47.107.80.174
+file.path:
+  upload: /opt/upload/
+  package: /opt/package/
+#  download: /opt/download/
+#  upload: C:\chenli\IDEA\Idea_WorkSpace\filedemo\upload\
+  download: C:\chenli\IDEA\Idea_WorkSpace\filedemo\download\
+ftp:
+  host: 145.170.23.230
   port: 22
   username: root
-  password: Cl314159
+  password: 123456
+#  host: 47.107.80.174
+#  port: 22
+#  username: root
+#  password: Cl314159
+spring:
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB

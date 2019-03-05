@@ -32,7 +32,7 @@ import java.util.Map;
 public class UploadFileController {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    @Value("${file.upload.path}")
+    @Value("${file.path.upload}")
     private String uploadPath;
 
     @Autowired
