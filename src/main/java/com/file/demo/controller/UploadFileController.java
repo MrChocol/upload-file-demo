@@ -2,11 +2,11 @@ package com.file.demo.controller;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.map.MapUtil;
-import cn.hutool.extra.ssh.JschUtil;
 import cn.hutool.extra.ssh.Sftp;
 import com.jcraft.jsch.SftpException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,16 +36,9 @@ public class UploadFileController {
 
     @Value("${file.upload.path}")
     private String uploadPath;
-    @Value("${iot-ftp.host}")
-    private String ftpHost;
-    @Value("${iot-ftp.port}")
-    private Integer ftpPort;
-    @Value("${iot-ftp.username}")
-    private String ftpUsername;
-    @Value("${iot-ftp.password}")
-    private String ftpPassword;
 
-    private Sftp sftp = JschUtil.createSftp(ftpHost, ftpPort, ftpUsername, ftpPassword);
+    @Autowired
+    private Sftp sftp;
 
     @RequestMapping("/upload")
     public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) {
@@ -106,6 +99,7 @@ public class UploadFileController {
         try {
             sftp.cd(uploadPath);
         } catch (Exception e) {
+            logger.info("该文件夹不存在，自动创建");
             sftp.mkdir(uploadPath);
         }
         try {
