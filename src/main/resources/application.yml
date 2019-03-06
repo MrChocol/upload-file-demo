@@ -1,10 +1,10 @@
 server:
   port: 8090
 file.path:
-#  upload: /opt/jdk1.8.0_191/
+  upload: /opt/upload/
   package: /opt/package/
 #  download: /opt/download/
-  upload: C:\Users\cllwy\Desktop\upload
+#  upload: C:\chenli\IDEA\Idea_WorkSpace\filedemo\upload\
   download: C:\chenli\IDEA\Idea_WorkSpace\filedemo\download\
 ftp:
   host: 145.170.23.230
