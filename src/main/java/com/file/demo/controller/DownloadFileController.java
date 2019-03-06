@@ -28,7 +28,7 @@ import java.io.*;
  * 文件下载
  */
 @RestController
-@RequestMapping(value = "file")
+@RequestMapping(value = "/file")
 public class DownloadFileController {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     @Value("${file.path.upload}")
