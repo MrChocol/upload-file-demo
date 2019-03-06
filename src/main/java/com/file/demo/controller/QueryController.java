@@ -9,7 +9,6 @@ import com.file.demo.model.FileInfo;
 import com.file.demo.utils.ListBuilder;
 import com.file.demo.utils.MapBuilder;
 import com.jcraft.jsch.ChannelSftp;
-import com.jcraft.jsch.Session;
 import com.jcraft.jsch.SftpATTRS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,12 +26,10 @@ import java.util.Vector;
 @RequestMapping(value = "/query")
 public class QueryController {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    @Value("${file.path.upload}")
-    private String uploadPath;
+    @Value("${file.path.target}")
+    private String targetPath;
     @Autowired
     private Sftp sftp;
-    @Autowired
-    private Session session;
 
     // 懒加载指定地址的目录，先返回其实层的所有文件/文件夹
     // 前台点击某个文件夹时，发送该文件夹的路径过来，后台去指定文件夹去获取指定文件夹路径下的所有文件/文件夹
@@ -56,10 +53,10 @@ public class QueryController {
     public ResponseEntity<?> queryAssignPointDirectory() {
         Map result = MapBuilder.start().build();
         try {
-            result.put("data", MapBuilder.start("fileTree", handleFtpLsResult(sftp.getClient().ls(uploadPath))).build());
+            result.put("data", MapBuilder.start("fileTree", handleFtpLsResult(sftp.getClient().ls(targetPath))).build());
             return new ResponseEntity<>(MapBuilder.start("message", "Query successful!").put("data", result).build(), HttpStatus.OK);
         } catch (Exception e) {
-            logger.error("目录:{}不存在", uploadPath);
+            logger.error("目录:{}不存在", targetPath);
             return new ResponseEntity<>(MapUtil.builder("message", "The assignPoint can not be empty!").build(), HttpStatus.BAD_REQUEST);
         }
     }
@@ -71,7 +68,7 @@ public class QueryController {
             if (!("..".equals(filename) || ".".equals(filename))) {
                 SftpATTRS attrs = entry.getAttrs();
                 FileInfo fileInfo = FileInfo.create();
-                fileInfo.setSourceFileName(filename).setSize(attrs.getSize()).setCreateTime(attrs.getMTime()).setSourcePath(uploadPath);
+                fileInfo.setSourceFileName(filename).setSize(attrs.getSize()).setCreateTime(attrs.getMTime()).setSourcePath(targetPath);
                 if (entry.getLongname().startsWith("-")) fileInfo.setDocumentType(Constant.File);
                 else fileInfo.setDocumentType(Constant.Directory);
                 lsEntrys.add(fileInfo);

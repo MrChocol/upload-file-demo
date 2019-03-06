@@ -1,6 +1,7 @@
 package com.file.demo;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ReUtil;
 import cn.hutool.http.HttpUtil;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -48,6 +49,13 @@ public class DemoApplicationTests {
             result.add(f.getName());
             System.out.println("F-" + f.getName());
         }
+    }
+
+    public static void main(String[] args) {
+        String proxyDirectory = "C:\\chenli\\IDEA\\Idea_WorkSpace\\filedemo\\download\\file/";
+        String s1 = ReUtil.replaceAll(proxyDirectory, "\\\\", "/");
+        System.out.println(proxyDirectory);
+        System.out.println(s1);
     }
 
 }

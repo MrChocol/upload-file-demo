@@ -32,8 +32,8 @@ import java.util.Map;
 public class UploadFileController {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    @Value("${file.path.upload}")
-    private String uploadPath;
+    @Value("${file.path.target}")
+    private String targetPath;
 
     @Autowired
     private Sftp sftp;
@@ -42,7 +42,7 @@ public class UploadFileController {
      * 上传到本地
      */
     @RequestMapping("/upload")
-    public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> targetFile(@RequestParam("file") MultipartFile file) {
         try {
             if (file.isEmpty())
                 return new ResponseEntity<>(MapUtil.builder("message", "The file cannot be empty").build(), HttpStatus.BAD_REQUEST);
@@ -52,16 +52,16 @@ public class UploadFileController {
             // 获取文件的后缀名
             String suffixName = fileName.substring(fileName.lastIndexOf("."));
             // 设置文件存储路径
-            String path = uploadPath + fileName + suffixName;
+            String path = targetPath + fileName + suffixName;
             File dest = new File(path);
             // 检测是否存在目录
             if (!dest.getParentFile().exists()) dest.getParentFile().mkdirs();// 新建文件夹
             file.transferTo(dest);// 文件写入
             return new ResponseEntity<>(MapUtil.builder("message", "Upload successful").build(), HttpStatus.OK);
         } catch (IllegalStateException e) {
-            logger.error("UploadFileController uploadFile:{}", e.getMessage());
+            logger.error("UploadFileController targetFile:{}", e.getMessage());
         } catch (IOException e) {
-            logger.error("UploadFileController uploadFile:{}", e.getMessage());
+            logger.error("UploadFileController targetFile:{}", e.getMessage());
         }
         return new ResponseEntity<>(MapUtil.builder("message", "Upload failed").build(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -82,7 +82,7 @@ public class UploadFileController {
                 try {
                     byte[] bytes = file.getBytes();
                     stream = new BufferedOutputStream(new FileOutputStream(
-                            new File(uploadPath + file.getOriginalFilename())));//设置文件路径及名字
+                            new File(targetPath + file.getOriginalFilename())));//设置文件路径及名字
                     stream.write(bytes);// 写入
                     stream.close();
                 } catch (Exception e) {
@@ -102,12 +102,12 @@ public class UploadFileController {
      * 上传到服务器
      */
     @RequestMapping("/uploadFtp")
-    public ResponseEntity<?> uploadFileToFtp(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> targetFileToFtp(@RequestParam("file") MultipartFile file) {
         try {
-            sftp.cd(uploadPath);
+            sftp.cd(targetPath);
         } catch (Exception e) {
             logger.info("该文件夹不存在，自动创建");
-            sftp.mkdir(uploadPath);
+            sftp.mkdir(targetPath);
         }
         try {
             sftp.getClient().put(file.getInputStream(), file.getOriginalFilename());

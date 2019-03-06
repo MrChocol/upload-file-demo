@@ -1,11 +1,11 @@
 server:
   port: 8090
 file.path:
-  upload: /opt/upload/
+  target: /opt/upload/
   package: /opt/package/
-#  download: /opt/download/
-#  upload: C:\chenli\IDEA\Idea_WorkSpace\filedemo\upload\
-  download: C:\chenli\IDEA\Idea_WorkSpace\filedemo\download\
+#  proxy: /opt/download/
+#  target: C:\chenli\IDEA\Idea_WorkSpace\filedemo\upload\
+  proxy: C:\chenli\IDEA\Idea_WorkSpace\filedemo\download\
 ftp:
   host: 145.170.23.230
   port: 22
