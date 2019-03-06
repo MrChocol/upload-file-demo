@@ -9,6 +9,7 @@ import cn.hutool.core.util.ZipUtil;
 import cn.hutool.extra.ssh.JschUtil;
 import cn.hutool.extra.ssh.Sftp;
 import cn.hutool.json.JSONObject;
+import com.file.demo.utils.MapBuilder;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.SftpException;
 import org.slf4j.Logger;
@@ -184,12 +185,12 @@ public class DownloadFileController {
                     localFile.delete();
                 } else
                     FileUtil.writeFromStream(sftp.getClient().get(fileName), downloadPath + fileName);
-                return new ResponseEntity<>(MapUtil.builder("message", "Download successful").build(), HttpStatus.OK);
+                return new ResponseEntity<>(MapBuilder.start("message", "Download successful").build(), HttpStatus.OK);
             } catch (SftpException e) {
                 logger.error("文件:{}获取失败:{}", fileName, e.getMessage());
             }
         }
-        return new ResponseEntity<>(MapUtil.builder("message", "The file you need does not exist").build(), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(MapBuilder.start("message", "The file you need does not exist").build(), HttpStatus.BAD_REQUEST);
     }
 
     //判断文件夹或者文件是否存在

@@ -1,12 +1,12 @@
 package com.file.demo.controller;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.ssh.Sftp;
 import cn.hutool.json.JSONObject;
 import com.file.demo.model.Constant;
 import com.file.demo.model.FileInfo;
+import com.file.demo.utils.ListBuilder;
 import com.file.demo.utils.MapBuilder;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.Session;
@@ -19,7 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
@@ -64,8 +64,8 @@ public class QueryController {
         }
     }
 
-    private ArrayList<FileInfo> handleFtpLsResult(Vector<ChannelSftp.LsEntry> lsInfo) {
-        ArrayList<FileInfo> lsEntrys = CollUtil.newArrayList();
+    private List<FileInfo> handleFtpLsResult(Vector<ChannelSftp.LsEntry> lsInfo) {
+        List<FileInfo> lsEntrys = ListBuilder.start().build();
         lsInfo.forEach(entry -> {
             String filename = entry.getFilename();
             if (!("..".equals(filename) || ".".equals(filename))) {
