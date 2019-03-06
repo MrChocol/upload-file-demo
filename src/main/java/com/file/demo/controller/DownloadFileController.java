@@ -8,6 +8,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.ZipUtil;
 import cn.hutool.extra.ssh.JschUtil;
 import cn.hutool.extra.ssh.Sftp;
+import cn.hutool.json.JSONObject;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.SftpException;
 import org.slf4j.Logger;
@@ -16,10 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
@@ -153,10 +151,14 @@ public class DownloadFileController {
     }
 
     //接收下载请求，下载指定的文件夹/文件.如果是文件就直接下载下来，如果是文件夹发送指令过去进行打包在拉
-    @GetMapping("/downloadFromFtp/{fileName}")
-    public ResponseEntity<?> downloadFileFromFtp(@PathVariable("fileName") final String fileName) {
+    @PostMapping("/downloadFromFtp")
+    public ResponseEntity<?> downloadFileFromFtp(@RequestBody JSONObject requestJson) {
+        JSONObject sourcePath = requestJson.getJSONObject("sourcePath");
+        String filePath = sourcePath.getStr("sourcePath");
+        String fileName = sourcePath.getStr("fileName");
+        String serverIp = sourcePath.getStr("serverIp");    //指定服务器
         //先判断目标服务器指定文件夹是否存在，y下一步，n返回结果
-        if (isExists(uploadPath, fileName)) {
+        if (isExists(filePath, fileName)) {
             //判断目标文件是否是文件夹，n返回文件，y下一步
             String temporaryPackageName = null;
             if (isDirectory(fileName)) {
@@ -193,7 +195,7 @@ public class DownloadFileController {
     //判断文件夹或者文件是否存在
     private boolean isExists(String path, String fileName) {
         if (isExistsForPath(path)) {
-            if (StrUtil.isNotEmpty(fileName) && sftp.ls(uploadPath).contains(fileName))
+            if (StrUtil.isNotEmpty(fileName) && sftp.ls(path).contains(fileName))
                 return true;
         }
         return false;
@@ -204,7 +206,7 @@ public class DownloadFileController {
             if (sftp.cd(path)) return true;
         } catch (Exception e) {
             logger.info("该文件夹不存在，自动创建");
-            sftp.mkdir(uploadPath);   //没有则创建
+            sftp.mkdir(path);   //没有则创建
         }
         return false;
     }
