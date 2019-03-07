@@ -50,7 +50,7 @@ public class QueryController {
     }
 
     @GetMapping("/masterDirectory")
-    public ResponseEntity<?> queryAssignPointDirectory() {
+    public ResponseEntity<?> queryMasterDirectory() {
         Map result = MapBuilder.start().build();
         try {
             result.put("data", MapBuilder.start("fileTree", handleFtpLsResult(sftp.getClient().ls(targetPath))).build());
