@@ -211,7 +211,7 @@ public class DownloadFileController {
         try {
             if (sftp.cd(path)) return true;
         } catch (Exception e) {
-            logger.info("该文件夹不存在，自动创建");
+            logger.info("该文件夹不存在，自动创建：{}", path);
             if (isWindows())
                 new File(path);
             else

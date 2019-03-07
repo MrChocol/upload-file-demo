@@ -39,7 +39,7 @@ public class QueryController {
         if (StrUtil.isNotEmpty(assignPoint)) {
             Map result = MapBuilder.start().build();
             try {
-                result.put("data", MapBuilder.start("fileTree", handleFtpLsResult(sftp.getClient().ls(assignPoint))).build());
+                result.put("data", MapBuilder.start("fileTree", handleFtpLsResult(sftp.getClient().ls(assignPoint), assignPoint)).build());
                 return new ResponseEntity<>(MapBuilder.start("message", "Query successful!").put("data", result).build(), HttpStatus.OK);
             } catch (Exception e) {
                 logger.error("目录:{}不存在", assignPoint);
@@ -53,7 +53,7 @@ public class QueryController {
     public ResponseEntity<?> queryMasterDirectory() {
         Map result = MapBuilder.start().build();
         try {
-            result.put("data", MapBuilder.start("fileTree", handleFtpLsResult(sftp.getClient().ls(targetPath))).build());
+            result.put("data", MapBuilder.start("fileTree", handleFtpLsResult(sftp.getClient().ls(targetPath), targetPath)).build());
             return new ResponseEntity<>(MapBuilder.start("message", "Query successful!").put("data", result).build(), HttpStatus.OK);
         } catch (Exception e) {
             logger.error("目录:{}不存在", targetPath);
@@ -61,14 +61,14 @@ public class QueryController {
         }
     }
 
-    private List<FileInfo> handleFtpLsResult(Vector<ChannelSftp.LsEntry> lsInfo) {
+    private List<FileInfo> handleFtpLsResult(Vector<ChannelSftp.LsEntry> lsInfo, String filePath) {
         List<FileInfo> lsEntrys = ListBuilder.start().build();
         lsInfo.forEach(entry -> {
             String filename = entry.getFilename();
             if (!("..".equals(filename) || ".".equals(filename))) {
                 SftpATTRS attrs = entry.getAttrs();
                 FileInfo fileInfo = FileInfo.create();
-                fileInfo.setSourceFileName(filename).setSize(attrs.getSize()).setCreateTime(attrs.getMTime()).setSourcePath(targetPath);
+                fileInfo.setSourceFileName(filename).setSize(attrs.getSize()).setCreateTime(attrs.getMTime()).setSourcePath(filePath);
                 if (entry.getLongname().startsWith("-")) fileInfo.setDocumentType(Constant.File);
                 else fileInfo.setDocumentType(Constant.Directory);
                 lsEntrys.add(fileInfo);
