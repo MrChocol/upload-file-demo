@@ -2,7 +2,10 @@ package com.file.demo;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ReUtil;
+import cn.hutool.extra.ssh.JschUtil;
+import cn.hutool.extra.ssh.Sftp;
 import cn.hutool.http.HttpUtil;
+import com.jcraft.jsch.ChannelSftp;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,8 +20,8 @@ public class DemoApplicationTests {
 
     @Test
     public void contextLoads() {
-        String s = HttpUtil.get("localhost:8090/file/get");
-        System.out.println(s);
+        Sftp administrator = JschUtil.createSftp("145.170.23.203", 22, "administrator", "P@ssw0rd");
+        ChannelSftp client = administrator.getClient();
     }
 
     @Test

@@ -108,7 +108,7 @@ public class DownloadFileController {
         if (isExists(targetPath, fileName)) {
             InputStream inputStream = null;
             try {
-                inputStream = sftp.getClient().get(fileName);
+                inputStream = sftp.getClient().get(targetPath + fileName);
             } catch (SftpException e) {
                 logger.error("文件:{}获取失败:{}", fileName, e.getMessage());
             }
@@ -167,8 +167,6 @@ public class DownloadFileController {
                 else {
                     if (!isExistsForPath(packagePath)) sftp.mkdir(packagePath);
                     temporaryPackageName = fileName + ".zip";
-                    // 发送exec指令进行打包，统一后缀，然后下载过来
-//                    String exec2 = JschUtil.exec(session, "uname -a", null);
                     String exec = JschUtil.exec(session, StrUtil.format(packTemp, temporaryPackageName, filePath + fileName), null);
                     logger.info("执行结果:{}", exec);
                 }
@@ -180,7 +178,7 @@ public class DownloadFileController {
                 if (isWindows())
                     proxyDirectory = ReUtil.replaceAll(proxyDirectory, "/", "\\");
                 else proxyDirectory = ReUtil.replaceAll(proxyDirectory, "\\\\", "/");
-                isExistsForPath(proxyDirectory);
+                if (!isExistsForPath(proxyDirectory)) new File(proxyDirectory);
                 if (temporaryPackageName != null) {
                     File localFile = FileUtil.writeFromStream(sftp.getClient().get(packagePath + temporaryPackageName), proxyDirectory + temporaryPackageName);
                     // 删除远端的压缩包
@@ -200,22 +198,21 @@ public class DownloadFileController {
 
     //判断文件夹或者文件是否存在
     private boolean isExists(String path, String fileName) {
-        if (isExistsForPath(path)) {
-            if (StrUtil.isNotEmpty(fileName) && sftp.ls(path).contains(fileName))
-                return true;
-        }
-        return false;
+        if (isExistsForPath(path))
+            return StrUtil.isNotEmpty(fileName) && sftp.ls(path).contains(fileName);
+        else
+            return false;
     }
 
     private boolean isExistsForPath(String path) {
         try {
-            if (sftp.cd(path)) return true;
+            return sftp.cd(path);
         } catch (Exception e) {
-            logger.info("该文件夹不存在，自动创建：{}", path);
-            if (isWindows())
-                new File(path);
-            else
-                sftp.mkdir(path);   //没有则创建
+            logger.info("该文件夹不存在：{}", path);
+//            if (isWindows())
+//                new File(path);
+//            else
+//                sftp.mkdir(path);   //没有则创建
         }
         return false;
     }

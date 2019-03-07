@@ -11,6 +11,7 @@ ftp:
   port: 22
   username: root
   password: 123456
+  os: windows
 #  host: 47.107.80.174
 #  port: 22
 #  username: root

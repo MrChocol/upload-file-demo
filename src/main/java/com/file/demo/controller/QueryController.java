@@ -69,8 +69,8 @@ public class QueryController {
                 SftpATTRS attrs = entry.getAttrs();
                 FileInfo fileInfo = FileInfo.create();
                 fileInfo.setSourceFileName(filename).setSize(attrs.getSize()).setCreateTime(attrs.getMTime()).setSourcePath(filePath);
-                if (entry.getLongname().startsWith("-")) fileInfo.setDocumentType(Constant.File);
-                else fileInfo.setDocumentType(Constant.Directory);
+                if (entry.getLongname().startsWith("-")) fileInfo.setDocumentType(Constant.FileType.FILE);
+                else fileInfo.setDocumentType(Constant.FileType.DIRECTORY);
                 lsEntrys.add(fileInfo);
             }
         });
