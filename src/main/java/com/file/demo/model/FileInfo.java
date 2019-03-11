@@ -4,7 +4,7 @@ public class FileInfo {
     private Long size;
     private String sourceFileName;
     private String sourcePath;
-    private Integer createTime;
+    private Long createTime;
     private String documentType;
 
     public static FileInfo create() {
@@ -39,11 +39,11 @@ public class FileInfo {
         return this;
     }
 
-    public Integer getCreateTime() {
+    public Long getCreateTime() {
         return createTime;
     }
 
-    public FileInfo setCreateTime(Integer createTime) {
+    public FileInfo setCreateTime(Long createTime) {
         this.createTime = createTime;
         return this;
     }

@@ -21,14 +21,15 @@ public class OSUtil {
 
     public static String normalizeSourcePath(String path, boolean isWindows) {
         StringBuilder sb = new StringBuilder(path);
-        if (!(path.endsWith("/") || path.endsWith("\\"))) {
-            if (isWindows == false) {
+        if (StrUtil.isEmpty(path)) return path;
+        if (isWindows == false) {
+            sb = StrUtil.builder(ReUtil.replaceAll(sb.toString(), "\\\\", "/"));
+            if (!path.endsWith("/"))
                 sb.append("/");
-                sb = StrUtil.builder(ReUtil.replaceAll(sb.toString(), "\\\\", "/"));
-            } else {
+        } else {
+            sb = StrUtil.builder(ReUtil.replaceAll(sb.toString(), "/", "\\"));
+            if (!path.endsWith("\\"))
                 sb.append("\\");
-                sb = StrUtil.builder(ReUtil.replaceAll(sb.toString(), "/", "\\"));
-            }
         }
         return sb.toString();
     }

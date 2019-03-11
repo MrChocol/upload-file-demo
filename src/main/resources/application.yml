@@ -3,7 +3,7 @@ server:
 file:
   compress.suffix: zip
   path:
-    nfs: /opt/upload/
+    backups: /opt/upload
     package: /opt/package/
 #  nfs: /opt/download/
 #  download: C:\CHENLI\work\idea_workspace\filedemo\upload\

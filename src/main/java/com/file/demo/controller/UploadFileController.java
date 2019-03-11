@@ -1,14 +1,11 @@
 package com.file.demo.controller;
 
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.exceptions.UtilException;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.CharsetUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.ZipUtil;
 import cn.hutool.extra.ssh.Sftp;
-import cn.hutool.json.JSONObject;
-import com.file.demo.model.Constant;
 import com.file.demo.utils.OSUtil;
 import com.jcraft.jsch.SftpException;
 import org.slf4j.Logger;
@@ -17,7 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
@@ -26,11 +26,9 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.zip.ZipFile;
 
 
 @RestController
@@ -38,8 +36,8 @@ import java.util.zip.ZipFile;
 public class UploadFileController {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    @Value("${file.path.nfs}")
-    private String nfsPath;
+    @Value("${file.path.backups}")
+    private String backupsPath;
     @Value("${file.path.download}")
     private String downloadPath;
 
@@ -87,18 +85,18 @@ public class UploadFileController {
     }
 
     /**
-     * 上传到服务器
+     * 上传到指定服务器
      */
     @RequestMapping("/uploadFtp")
     public ResponseEntity<?> targetFileToFtp(@RequestParam("file") MultipartFile file) {
         try {
-            sftp.cd(nfsPath);
+            sftp.cd(backupsPath);
         } catch (Exception e) {
             logger.info("该文件夹不存在，自动创建");
-            sftp.mkdir(nfsPath);
+            sftp.mkdir(backupsPath);
         }
         try {
-            sftp.getClient().put(file.getInputStream(), nfsPath + file.getOriginalFilename());
+            sftp.getClient().put(file.getInputStream(), backupsPath + file.getOriginalFilename());
         } catch (SftpException e) {
             logger.error("文件上传失败:{}", e.getMessage());
         } catch (IOException e) {
@@ -123,7 +121,7 @@ public class UploadFileController {
                 try {
                     byte[] bytes = file.getBytes();
                     stream = new BufferedOutputStream(new FileOutputStream(
-                            new File(nfsPath + file.getOriginalFilename())));//设置文件路径及名字
+                            new File(backupsPath + file.getOriginalFilename())));//设置文件路径及名字
                     stream.write(bytes);// 写入
                     stream.close();
                 } catch (Exception e) {

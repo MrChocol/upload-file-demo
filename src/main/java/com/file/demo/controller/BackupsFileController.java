@@ -2,12 +2,14 @@ package com.file.demo.controller;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.util.CharsetUtil;
 import cn.hutool.core.util.ReUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.ZipUtil;
 import cn.hutool.extra.ssh.JschUtil;
 import cn.hutool.extra.ssh.Sftp;
 import cn.hutool.json.JSONObject;
+import com.file.demo.model.Constant;
 import com.file.demo.utils.MapBuilder;
 import com.file.demo.utils.OSUtil;
 import com.jcraft.jsch.Session;
@@ -27,15 +29,16 @@ import java.io.*;
  * 文件下载
  */
 @RestController
-@RequestMapping(value = "/file")
-public class DownloadFileController {
+@RequestMapping(value = "/back")
+public class BackupsFileController {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    @Value("${file.path.nfs}")
-    private String nfsPath;
+    @Value("${file.path.backups}")
+    private String backupsPath;
     @Value("${file.path.download}")
     private String downloadPath;
     private String packagePath;
     private String packTemp;   //zip -r ../package/xxxx.zip test1
+    private String unpackTemp = "unzip {}";   //unzip ../package/xxxx.zip
     @Autowired
     private Sftp sftp;
     @Autowired
@@ -45,6 +48,49 @@ public class DownloadFileController {
     public void setPackagePath(String packagePath) {
         this.packagePath = packagePath;
         packTemp = "zip -rj " + packagePath + "{} " + "{}";
+    }
+
+    /**
+     * 将当前服务器指定的资源上传到指定搞得服务器的文件夹下
+     */
+    @PostMapping("/backToServer")
+    public ResponseEntity<?> backToServer(@RequestBody JSONObject requestJson) throws FileNotFoundException, SftpException {
+        JSONObject sourcePath = requestJson.getJSONObject("sourcePath");
+        String filePath = OSUtil.normalizeSourcePath(sourcePath.getStr("sourcePath"), OSUtil.isWindows());
+        String fileName = OSUtil.normalizeFileName(sourcePath.getStr("fileName"));
+        String serverAddress = sourcePath.getStr("address");    //指定服务器
+        //如果是linux服务器则通过ftp进行操作
+        //存放在目标服务器的文件夹路径=filePath-downloadPath+backupsPath
+        if (Constant.OSType.LINUX.contains(sourcePath.getStr("osType"))) {
+            if (!backupsPath.endsWith("/")) backupsPath = backupsPath + "/";
+            String targetPath = OSUtil.normalizeSourcePath(backupsPath + StrUtil.subAfter(filePath, downloadPath, false), false);
+            // todo 通过serverAddress去连接linux服务器
+            //判断目标文件是文件夹还是文件
+            File targetFile = new File(filePath + fileName);
+            if (targetFile.isFile()) {
+                //文件--》直接传输
+                sftp.getClient().put(new FileInputStream(targetFile), targetPath + fileName);
+            } else {
+                //文件夹--》压缩
+                File zip = ZipUtil.zip(targetFile, CharsetUtil.CHARSET_UTF_8);
+                //进入目标目录
+                try {
+                    sftp.cd(targetPath);
+                } catch (Exception e) {
+                    logger.info("该文件夹不存在，自动创建:{}", targetPath);
+                    sftp.mkdir(targetPath);
+                }
+                sftp.getClient().put(new FileInputStream(zip), targetPath + zip.getName());
+                targetFile.delete();
+                String exec = JschUtil.exec(session, StrUtil.format(unpackTemp, targetPath + zip.getName()), null);
+                boolean b = sftp.delFile(targetPath + zip.getName());
+                return new ResponseEntity<>(MapBuilder.start("message", "Backups successful").build(), HttpStatus.OK);
+            }
+        } else {
+            //如果是windows服务器则通过net use
+
+        }
+        return null;
     }
 
     /**
@@ -106,10 +152,10 @@ public class DownloadFileController {
     public ResponseEntity<?> proxyFileFromFtp(@PathVariable("fileName") final String fileName, HttpServletResponse response) {
         //判断fileName是否存在
         //存在则下载下来
-        if (isExists(nfsPath, fileName)) {
+        if (isExists(backupsPath, fileName)) {
             InputStream inputStream = null;
             try {
-                inputStream = sftp.getClient().get(nfsPath + fileName);
+                inputStream = sftp.getClient().get(backupsPath + fileName);
             } catch (SftpException e) {
                 logger.error("文件:{}获取失败:{}", fileName, e.getMessage());
             }
@@ -175,7 +221,7 @@ public class DownloadFileController {
             try {
                 if (!FileUtil.exist(downloadPath)) FileUtil.newFile(downloadPath);
                 //把压缩包下到指定的文件夹，若指定文件夹不存在则创建
-                String proxyDirectory = downloadPath + StrUtil.subAfter(filePath, nfsPath, false);
+                String proxyDirectory = downloadPath + StrUtil.subAfter(filePath, backupsPath, false);
                 if (OSUtil.isWindows())
                     proxyDirectory = ReUtil.replaceAll(proxyDirectory, "/", "\\");
                 else proxyDirectory = ReUtil.replaceAll(proxyDirectory, "\\\\", "/");
