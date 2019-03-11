@@ -54,7 +54,7 @@ public class BackupsFileController {
      * 将当前服务器指定的资源上传到指定搞得服务器的文件夹下
      */
     @PostMapping("/backToServer")
-    public ResponseEntity<?> backToServer(@RequestBody JSONObject requestJson) throws FileNotFoundException, SftpException {
+    public ResponseEntity<?> backToServer(@RequestBody JSONObject requestJson) {
         JSONObject sourcePath = requestJson.getJSONObject("sourcePath");
         String filePath = OSUtil.normalizeSourcePath(sourcePath.getStr("sourcePath"), OSUtil.isWindows());
         String fileName = OSUtil.normalizeFileName(sourcePath.getStr("fileName"));
@@ -67,29 +67,37 @@ public class BackupsFileController {
             // todo 通过serverAddress去连接linux服务器
             //判断目标文件是文件夹还是文件
             File targetFile = new File(filePath + fileName);
-            if (targetFile.isFile()) {
-                //文件--》直接传输
-                sftp.getClient().put(new FileInputStream(targetFile), targetPath + fileName);
-            } else {
-                //文件夹--》压缩
-                File zip = ZipUtil.zip(targetFile, CharsetUtil.CHARSET_UTF_8);
-                //进入目标目录
-                try {
-                    sftp.cd(targetPath);
-                } catch (Exception e) {
-                    logger.debug("该文件夹不存在，自动创建:{}", targetPath);
-                    sftp.mkdir(targetPath);
+            try {
+                FileInputStream fileInputStream;
+                File zip = null;
+                if (targetFile.isFile()) {
+                    //文件--》直接传输
+                    fileInputStream = new FileInputStream(targetFile);
+                    sftp.getClient().put(fileInputStream, targetPath + fileName);
+                } else {
+                    //文件夹--》压缩
+                    zip = ZipUtil.zip(targetFile, CharsetUtil.CHARSET_UTF_8);
+                    //进入目标目录
+                    try {
+                        sftp.cd(targetPath);
+                    } catch (Exception e) {
+                        logger.debug("该文件夹不存在，自动创建:{}", targetPath);
+                        sftp.mkdir(targetPath);
+                    }
+                    fileInputStream = new FileInputStream(zip);
+                    sftp.getClient().put(fileInputStream, targetPath + zip.getName());
+                    String exec = JschUtil.exec(session, StrUtil.format(unpackTemp, targetPath + zip.getName()), null);
+                    logger.debug("执行结果:{}", exec);
+                    sftp.delFile(targetPath + zip.getName());
                 }
-                sftp.getClient().put(new FileInputStream(zip), targetPath + zip.getName());
-                zip.delete();
-                String exec = JschUtil.exec(session, StrUtil.format(unpackTemp, targetPath + zip.getName()), null);
-                logger.debug("执行结果:{}", exec);
-                sftp.delFile(targetPath + zip.getName());
+                fileInputStream.close();
+                if (zip != null) zip.delete();
                 return new ResponseEntity<>(MapBuilder.start("message", "Backups successful").build(), HttpStatus.OK);
+            } catch (Exception e) {
+                logger.error("BackupsFileController backToServer error:{}", e.getMessage());
             }
         } else {
-            //如果是windows服务器则通过net use
-
+            //todo 如果是windows服务器则通过net use
         }
         return null;
     }
