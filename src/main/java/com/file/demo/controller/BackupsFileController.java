@@ -77,13 +77,14 @@ public class BackupsFileController {
                 try {
                     sftp.cd(targetPath);
                 } catch (Exception e) {
-                    logger.info("该文件夹不存在，自动创建:{}", targetPath);
+                    logger.debug("该文件夹不存在，自动创建:{}", targetPath);
                     sftp.mkdir(targetPath);
                 }
                 sftp.getClient().put(new FileInputStream(zip), targetPath + zip.getName());
-                targetFile.delete();
+                zip.delete();
                 String exec = JschUtil.exec(session, StrUtil.format(unpackTemp, targetPath + zip.getName()), null);
-                boolean b = sftp.delFile(targetPath + zip.getName());
+                logger.debug("执行结果:{}", exec);
+                sftp.delFile(targetPath + zip.getName());
                 return new ResponseEntity<>(MapBuilder.start("message", "Backups successful").build(), HttpStatus.OK);
             }
         } else {
