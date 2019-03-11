@@ -9,6 +9,7 @@ import cn.hutool.extra.ssh.JschUtil;
 import cn.hutool.extra.ssh.Sftp;
 import cn.hutool.json.JSONObject;
 import com.file.demo.utils.MapBuilder;
+import com.file.demo.utils.OSUtil;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.SftpException;
 import org.slf4j.Logger;
@@ -29,10 +30,10 @@ import java.io.*;
 @RequestMapping(value = "/file")
 public class DownloadFileController {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    @Value("${file.path.target}")
-    private String targetPath;
-    @Value("${file.path.proxy}")
-    private String proxyPath;
+    @Value("${file.path.nfs}")
+    private String nfsPath;
+    @Value("${file.path.download}")
+    private String downloadPath;
     private String packagePath;
     private String packTemp;   //zip -r ../package/xxxx.zip test1
     @Autowired
@@ -53,7 +54,7 @@ public class DownloadFileController {
     public ResponseEntity<?> proxyFile(@PathVariable("fileName") final String fileName, HttpServletResponse response) {
         if (fileName != null) {
             //设置文件路径
-            String filePath = proxyPath + File.separator + fileName;
+            String filePath = downloadPath + File.separator + fileName;
             File file = new File(filePath);
             if (file.exists()) {
                 response.setContentType("application/force-proxy");// 设置强制下载不打开
@@ -105,10 +106,10 @@ public class DownloadFileController {
     public ResponseEntity<?> proxyFileFromFtp(@PathVariable("fileName") final String fileName, HttpServletResponse response) {
         //判断fileName是否存在
         //存在则下载下来
-        if (isExists(targetPath, fileName)) {
+        if (isExists(nfsPath, fileName)) {
             InputStream inputStream = null;
             try {
-                inputStream = sftp.getClient().get(targetPath + fileName);
+                inputStream = sftp.getClient().get(nfsPath + fileName);
             } catch (SftpException e) {
                 logger.error("文件:{}获取失败:{}", fileName, e.getMessage());
             }
@@ -153,9 +154,9 @@ public class DownloadFileController {
     @PostMapping("/downloadFromFtp")
     public ResponseEntity<?> proxyFileFromFtp(@RequestBody JSONObject requestJson) {
         JSONObject sourcePath = requestJson.getJSONObject("sourcePath");
-        String filePath = sourcePath.getStr("sourcePath");
-        String fileName = sourcePath.getStr("fileName");
-        String serverIp = sourcePath.getStr("serverIp");    //指定服务器
+        String filePath = OSUtil.normalizeSourcePath(sourcePath.getStr("sourcePath"), OSUtil.isWindows());
+        String fileName = OSUtil.normalizeFileName(sourcePath.getStr("fileName"));
+        String serverAddress = sourcePath.getStr("serverIp");    //指定服务器
         //先判断目标服务器指定文件夹是否存在，y下一步，n返回结果
         if (isExists(filePath, fileName)) {
             //判断目标文件是否是文件夹，n返回文件，y下一步
@@ -172,10 +173,10 @@ public class DownloadFileController {
                 }
             }
             try {
-                if (!FileUtil.exist(proxyPath)) FileUtil.newFile(proxyPath);
+                if (!FileUtil.exist(downloadPath)) FileUtil.newFile(downloadPath);
                 //把压缩包下到指定的文件夹，若指定文件夹不存在则创建
-                String proxyDirectory = proxyPath + StrUtil.subAfter(filePath, targetPath, false);
-                if (isWindows())
+                String proxyDirectory = downloadPath + StrUtil.subAfter(filePath, nfsPath, false);
+                if (OSUtil.isWindows())
                     proxyDirectory = ReUtil.replaceAll(proxyDirectory, "/", "\\");
                 else proxyDirectory = ReUtil.replaceAll(proxyDirectory, "\\\\", "/");
                 if (!isExistsForPath(proxyDirectory)) new File(proxyDirectory);
@@ -209,15 +210,7 @@ public class DownloadFileController {
             return sftp.cd(path);
         } catch (Exception e) {
             logger.info("该文件夹不存在：{}", path);
-//            if (isWindows())
-//                new File(path);
-//            else
-//                sftp.mkdir(path);   //没有则创建
         }
         return false;
-    }
-
-    private boolean isWindows() {
-        return System.getProperty("os.name").toLowerCase().indexOf("windows") > -1;
     }
 }

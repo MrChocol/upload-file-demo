@@ -26,8 +26,8 @@ import java.util.Vector;
 @RequestMapping(value = "/query")
 public class QueryController {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    @Value("${file.path.target}")
-    private String targetPath;
+    @Value("${file.path.download}")
+    private String downloadPath;
     @Autowired
     private Sftp sftp;
 
@@ -53,10 +53,10 @@ public class QueryController {
     public ResponseEntity<?> queryMasterDirectory() {
         Map result = MapBuilder.start().build();
         try {
-            result.put("data", MapBuilder.start("fileTree", handleFtpLsResult(sftp.getClient().ls(targetPath), targetPath)).build());
+            result.put("data", MapBuilder.start("fileTree", handleFtpLsResult(sftp.getClient().ls(downloadPath), downloadPath)).build());
             return new ResponseEntity<>(MapBuilder.start("message", "Query successful!").put("data", result).build(), HttpStatus.OK);
         } catch (Exception e) {
-            logger.error("目录:{}不存在", targetPath);
+            logger.error("目录:{}不存在", downloadPath);
             return new ResponseEntity<>(MapUtil.builder("message", "The assignPoint can not be empty!").build(), HttpStatus.BAD_REQUEST);
         }
     }
