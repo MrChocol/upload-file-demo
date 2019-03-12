@@ -3,10 +3,9 @@ server:
 file:
   compress.suffix: zip
   path:
-    backups: /opt/upload
+#    backups: /opt/upload
+    backups: Z:\upload\
     package: /opt/package/
-#  nfs: /opt/download/
-#  download: C:\CHENLI\work\idea_workspace\filedemo\upload\
     download: C:\CHENLI\work\idea_workspace\filedemo\download\
 ftp:
   host: 145.170.23.230

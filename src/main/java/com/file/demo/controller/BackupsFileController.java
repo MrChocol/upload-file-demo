@@ -2,13 +2,11 @@ package com.file.demo.controller;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.map.MapUtil;
-import cn.hutool.core.util.CharsetUtil;
-import cn.hutool.core.util.ReUtil;
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.core.util.ZipUtil;
+import cn.hutool.core.util.*;
 import cn.hutool.extra.ssh.JschUtil;
 import cn.hutool.extra.ssh.Sftp;
 import cn.hutool.json.JSONObject;
+import com.file.demo.config.SftpConfig;
 import com.file.demo.model.Constant;
 import com.file.demo.utils.MapBuilder;
 import com.file.demo.utils.OSUtil;
@@ -39,6 +37,7 @@ public class BackupsFileController {
     private String packagePath;
     private String packTemp;   //zip -r ../package/xxxx.zip test1
     private String unpackTemp = "unzip {}";   //unzip ../package/xxxx.zip
+    private String netuseTemp = "net use {} \\\\\\{}\\\\{} {} /user:{}";   // net use Z: \\145.170.29.52\chenli xzli123 /user:xzli
     @Autowired
     private Sftp sftp;
     @Autowired
@@ -59,6 +58,7 @@ public class BackupsFileController {
         String filePath = OSUtil.normalizeSourcePath(sourcePath.getStr("sourcePath"), OSUtil.isWindows());
         String fileName = OSUtil.normalizeFileName(sourcePath.getStr("fileName"));
         String serverAddress = sourcePath.getStr("address");    //指定服务器
+//        sftp = SftpConfig.createSftp()
         //如果是linux服务器则通过ftp进行操作
         //存放在目标服务器的文件夹路径=filePath-downloadPath+backupsPath
         if (Constant.OSType.LINUX.contains(sourcePath.getStr("osType"))) {
@@ -92,14 +92,22 @@ public class BackupsFileController {
                 }
                 fileInputStream.close();
                 if (zip != null) zip.delete();
-                return new ResponseEntity<>(MapBuilder.start("message", "Backups successful").build(), HttpStatus.OK);
             } catch (Exception e) {
                 logger.error("BackupsFileController backToServer error:{}", e.getMessage());
             }
         } else {
-            //todo 如果是windows服务器则通过net use
+            //如果是windows服务器则通过net use
+            try {
+                Runtime.getRuntime().exec(StrUtil.format(netuseTemp, "Z:", "145.170.29.52", "chenli", "xzli123", "xzli"));
+//                Runtime.getRuntime().exec("net use Z: \\\\145.170.29.52\\chenli xzli123 /user:xzli");
+                String targetPath = OSUtil.normalizeSourcePath(backupsPath + StrUtil.subAfter(filePath, downloadPath, false), true);
+                File targetFile = new File(filePath + fileName);
+                FileUtil.copy(targetFile, new File(targetPath), true);
+            } catch (IOException e) {
+                logger.error("BackupsFileController backToServer error:{}", e.getMessage());
+            }
         }
-        return null;
+        return new ResponseEntity<>(MapBuilder.start("message", "Backups successful").build(), HttpStatus.OK);
     }
 
     /**
@@ -268,4 +276,5 @@ public class BackupsFileController {
         }
         return false;
     }
+
 }
